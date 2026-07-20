@@ -15,3 +15,5 @@
 .claude/skills/update-docs/SKILL.md
 .claude/skills/update-readme/SKILL.md
 .claude/skills/verify/SKILL.md
+.frameworks/fabric/rules.md
+.frameworks/kotlin/rules.md

@@ -203,6 +203,14 @@ elif content_matches "package.json" '"react"[[:space:]]*:'; then
 fi
 has_file "Cargo.toml" && DETECTED+=("rust")
 has_file "project.godot" && DETECTED+=("godot")
+if has_file "fabric.mod.json" || content_matches "build.gradle*" "fabric-loom"; then
+  DETECTED+=("fabric")
+fi
+if has_file "*.kt" \
+  || content_matches "build.gradle*" 'kotlin("jvm")' \
+  || content_matches "build.gradle*" "org\.jetbrains\.kotlin"; then
+  DETECTED+=("kotlin")
+fi
 has_file "tsconfig.json" && DETECTED+=("typescript")
 has_canvas_usage && DETECTED+=("canvas")
 
