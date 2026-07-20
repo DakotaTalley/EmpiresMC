@@ -1,0 +1,27 @@
+---
+name: sync-guidance
+description: Pull the latest .ai/.claude/.frameworks guidance from the template repo into this project without clobbering local mutable edits. Use periodically, or whenever you want to refresh guidance from the template.
+---
+
+`.ai/setup.sh` no longer merges anything itself — it overwrites `.ai/`, `.claude/agents/`, `.claude/skills/`, `.claude/settings.json`, and detected `.frameworks/<name>/` files in place, on the assumption that whoever runs it afterward reconciles `git diff`/`git status` against what it clobbered. That reconciliation is this skill.
+
+Whole-file removals (an agent, skill, or framework rule set the template no longer ships, or a framework that's no longer detected in this project) are handled directly by the script itself, via a manifest at `.ai/.template-manifest` — it deletes those files and prints what it removed. That's not a judgment call, so it isn't part of the reconciliation below; just note the removals in your step 7 summary. Everything below is about content *inside* files the script still overwrites in place: rule tables, and non-rule files like agents/skills/settings that the template modified rather than removed.
+
+`.ai/project-rules.md`, if present, is entirely project-owned — the template never ships one, so `setup.sh`'s copy never touches it. It needs no reconciliation step at all; skip it entirely below.
+
+1. **Check preconditions.** Confirm the target repo is a git repository with a clean working tree under `.ai/`, `.claude/`, `.frameworks/`, and `CLAUDE.md` (`git status --porcelain -- .ai .claude .frameworks CLAUDE.md`). If it's dirty, ask the user to commit or stash first — don't proceed on a dirty tree, since the diff in step 3 is the only record of what gets overwritten.
+2. **Locate the template source and run the script.** Check `CLAUDE.md`'s managed block or ask the user for the template path/URL, then run `.ai/setup.sh <template-source>` from the project root.
+3. **Capture the diff.** Run `git status --porcelain -- .ai .claude .frameworks` and `git diff -- .ai .claude .frameworks` immediately after. Together these are the complete, exact record of what the copy changed, added, or removed — everything below reasons from them, not from memory of what the project used to look like.
+4. **Reconcile rule tables** (`.ai/constitution.md`, `.frameworks/*/rules.md`) row by row, using the rule ID and mutability tag visible in the diff text itself:
+   - **Row removed and a same-ID row added** (an existing rule changed): if the removed row's tag is `mutable`, restore the removed row — local edits to mutable rules always win over the template's version. If `immutable`, leave the added row as-is; the overwrite already produced the correct result.
+   - **Row removed with no same-ID row added** (the template no longer has this ID):
+     - If the removed row's tag was `mutable`: restore it. A template dropping a rule must never silently delete a project's own edit to it.
+     - If the removed row's tag was `immutable`: leave it removed. The template maintainer has retired it — that's a deliberate, versioned decision on the template side (see the template's own CHANGELOG policy on `immutable` removals), not something a synced project should override. Add the ID to that file's **Retired Rule IDs** list (create the section, matching the format already used elsewhere, if the file predates it) so `add-rule` never reissues it.
+     - If restoring lands a real row back into a table where the diff also added a `_none yet_` placeholder, drop the placeholder — same convention `add-rule` already follows.
+   - **Row added with no same-ID row removed** (a genuinely new rule from the template, including a new **Retired Rule IDs** section itself): leave it as-is.
+   - Apply restorations with the Edit tool directly against the working tree files.
+5. **Reconcile non-rule files** (agents, skills, `.claude/settings.json`). These aren't tagged mutable/immutable, so don't silently pick a side: for each file the diff shows as *modified* (not newly added), show the user what changed and ask whether to keep the local version (revert the file) or take the template's update (leave it). Newly added files need no decision.
+6. **Run the immutable guardrail.** For every rule row tagged `immutable` in a file touched by the diff, confirm it now matches the template's copy of that row byte-for-byte — unless step 4 just deliberately let it be removed as a retirement. If any surviving `immutable` row diverges from the template's text, that's a bug in step 4's reconciliation, not a judgment call — fix it before finishing rather than flagging it to the user.
+7. **Summarize** what was restored (mutable rows, reverted files), what was left updated (immutable rows, new rules, accepted template file changes), what the script itself removed (from its report / `git status`), any `immutable` rows retired this run, and anything still open. Leave the result unstaged — the user reviews and commits it themselves, same as any other change.
+
+If there's no AI assistant available to do this (e.g. running `setup.sh` standalone, or from a non-Claude tool), `git status`/`git diff` after the script runs is still complete and accurate — resolve it by hand using the same rules above: restore removed `mutable` rows, keep `immutable` rows as overwritten (or removed, if retired — add the ID to that file's Retired Rule IDs list), and decide file-by-file for agents/skills/settings. Whole-file removals need no manual action; the script already made them.
