@@ -24,6 +24,13 @@ dependencies {
 
     // Kotlin entrypoint support, bundles the Kotlin stdlib and kotlinx libraries as a mod dependency.
     implementation("net.fabricmc:fabric-language-kotlin:${property("fabric_language_kotlin_version")}")
+
+    // Lets plain JUnit tests run mixin-modified classes and bootstrap Minecraft's registries (fabric DEV-009).
+    testImplementation("net.fabricmc:fabric-loader-junit:${property("loader_version")}")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.processResources {
