@@ -3,6 +3,7 @@
 <!-- ai-template:begin -->
 <!-- Managed by .ai/setup.sh from the ai-guidance template — edit outside these markers, not within. Re-running setup.sh replaces this block. -->
 This project follows [`.ai/constitution.md`](.ai/constitution.md) for general development and security guidance.
+This project also has its own [`.ai/project-rules.md`](.ai/project-rules.md).
 
 **Agents** (`.claude/agents/`): code-writer,docs-writer,research,test-writer
 
