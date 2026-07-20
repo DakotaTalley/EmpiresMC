@@ -79,7 +79,9 @@ A buildable, CI-verified Fabric + Kotlin mod skeleton that loads in the dev clie
 
 ## Exit criteria
 
-- [x] `./gradlew build test` and the gametest task pass locally. (CI verification pending first push — workflow is written and its action versions/tags verified, but hasn't executed on GitHub yet.)
+- [x] `./gradlew build test` and the gametest task pass locally and in CI.
+  - Locally: clean `./gradlew clean build` passes — 2 unit tests, 0 failures; gametests `All 2 required tests passed`.
+  - In CI: [run 29765736174](https://github.com/DakotaTalley/EmpiresMC/actions/runs/29765736174) succeeded on the first attempt, including `validate gradle wrapper`. Confirmed from the CI log that the gametests actually executed on the runner (`2 tests are now running` → `All 2 required tests passed`) rather than silently skipping — the `2` count is the `DEV-014` baseline plus our one test.
 - [x] Dev client launches and the log shows both entrypoint init lines. Verified via `./gradlew runClient`: `EmpiresMC common initializer running` and `EmpiresMC client initializer running` both logged, client reached the title screen cleanly (no crash report generated) before being stopped. An unrelated `UnsatisfiedLinkError` for `libflite.so` appeared — Minecraft's own Linux narrator/TTS library, missing on this machine and caught internally by vanilla's own narrator init; not a mod issue.
   - Incidentally found `.fabric/` and `logs/` were being generated at the project root, untracked and not covered by `.gitignore`'s existing `run/` entry — added both.
 - [x] `LICENSE` committed; `fabric.mod.json` validates (mod appears in the mod list in-game).
