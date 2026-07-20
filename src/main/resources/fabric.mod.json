@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "empiresmc",
+  "version": "${version}",
+  "name": "EmpiresMC",
+  "description": "A land ownership mod for Fabric.",
+  "authors": [
+    "Dakota Talley"
+  ],
+  "contact": {
+    "homepage": "https://github.com/DakotaTalley/EmpiresMC",
+    "sources": "https://github.com/DakotaTalley/EmpiresMC"
+  },
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      {
+        "adapter": "kotlin",
+        "value": "com.dakotatalley.empiresmc.EmpiresMC"
+      }
+    ],
+    "client": [
+      {
+        "adapter": "kotlin",
+        "value": "com.dakotatalley.empiresmc.client.EmpiresMCClient"
+      }
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*",
+    "fabric-language-kotlin": ">=1.13.13+kotlin.2.4.10"
+  }
+}
