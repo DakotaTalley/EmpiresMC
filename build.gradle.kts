@@ -33,6 +33,19 @@ tasks.test {
     useJUnitPlatform()
 }
 
+fabricApi {
+    configureTests {
+        // Separate source set + mod id from `main` so gametest code never ships in the mod jar.
+        createSourceSet = true
+        modId = "empiresmc-test"
+        enableGameTests = true
+        enableClientGameTests = false
+        // Agrees to the Minecraft EULA (https://aka.ms/MinecraftEULA) so Loom can spin up a real
+        // dedicated server for the gametest run — required boilerplate for this feature to run at all.
+        eula = true
+    }
+}
+
 tasks.processResources {
     val version = project.version
     inputs.property("version", version)

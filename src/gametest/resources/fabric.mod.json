@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "empiresmc-test",
+  "version": "1.0.0",
+  "name": "EmpiresMC Game Tests",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": [
+      "com.dakotatalley.empiresmc.gametest.EmpiresMCGameTest"
+    ]
+  }
+}
