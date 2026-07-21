@@ -2,6 +2,7 @@ package com.dakotatalley.empiresmc.command
 
 import com.dakotatalley.empiresmc.claim.ClaimDataAccess
 import com.dakotatalley.empiresmc.claim.ClaimKey
+import com.dakotatalley.empiresmc.registry.ModRegistry
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.context.CommandContext
@@ -10,6 +11,7 @@ import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.network.chat.Component
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ChunkPos
 
 // The permission-level-2 (GAMEMASTERS) admin/debug command skeleton this phase's design decisions
@@ -30,6 +32,7 @@ object AdminCommand {
                             Commands.literal("profile")
                                 .then(Commands.argument("player", EntityArgument.player()).executes(::profile))
                         )
+                        .then(Commands.literal("scepter").executes(::scepter))
                 )
         )
     }
@@ -61,6 +64,18 @@ object AdminCommand {
             "scepter ${if (empireProfile.receivedScepter) "received" else "not received"}, " +
             "$used/$allowance chunks claimed."
         source.sendSuccess({ Component.literal(message) }, false)
+        return Command.SINGLE_SUCCESS
+    }
+
+    // Recovery of last resort (alongside the crafting recipe): always available, no eligibility
+    // check. Harmless to run twice by design - the Scepter is a stateless handle (Phase 3).
+    private fun scepter(context: CommandContext<CommandSourceStack>): Int {
+        val source = context.source
+        val player = source.playerOrException
+        // Drop at feet if the inventory is full rather than silently discarding the Scepter - the
+        // success message below would otherwise lie about a recovery that didn't happen.
+        player.inventory.placeItemBackInInventory(ItemStack(ModRegistry.SCEPTER))
+        source.sendSuccess({ Component.literal("Gave a Scepter to ${player.scoreboardName}.") }, false)
         return Command.SINGLE_SUCCESS
     }
 }

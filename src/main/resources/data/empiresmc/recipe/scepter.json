@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minecraft:stick",
+    "minecraft:iron_ingot"
+  ],
+  "result": {
+    "id": "empiresmc:scepter"
+  }
+}

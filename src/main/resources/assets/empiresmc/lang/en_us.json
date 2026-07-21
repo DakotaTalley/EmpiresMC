@@ -1,0 +1,5 @@
+{
+  "item.empiresmc.scepter": "Scepter",
+  "item.empiresmc.scepter.tooltip.flavor": "A symbol of the empire you will build.",
+  "item.empiresmc.scepter.tooltip.chunks_placeholder": "Chunks: synced while claim data loads"
+}
