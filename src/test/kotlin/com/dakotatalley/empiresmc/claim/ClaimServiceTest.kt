@@ -125,6 +125,29 @@ class ClaimServiceTest {
     }
 
     @Test
+    fun grantScepterIfNeededGrantsExactlyOnce() {
+        var mutations = 0
+        val service = service(onMutate = { mutations++ })
+
+        assertEquals(true, service.grantScepterIfNeeded(alice))
+        assertEquals(true, service.profileOf(alice).receivedScepter)
+        assertEquals(1, mutations)
+
+        assertEquals(false, service.grantScepterIfNeeded(alice))
+        assertEquals(1, mutations, "a rejoin must not re-mark dirty or re-grant")
+    }
+
+    @Test
+    fun grantScepterIfNeededPreservesExistingProfileFields() {
+        val profiles = mutableMapOf(alice to EmpireProfile(alice, scepterTier = 2, receivedScepter = false))
+        val service = service(profiles = profiles)
+
+        assertEquals(true, service.grantScepterIfNeeded(alice))
+
+        assertEquals(EmpireProfile(alice, scepterTier = 2, receivedScepter = true), service.profileOf(alice))
+    }
+
+    @Test
     fun successfulMutationsInvokeTheDirtyMarkingHookDenialsDoNot() {
         var mutations = 0
         val service = service(onMutate = { mutations++ })

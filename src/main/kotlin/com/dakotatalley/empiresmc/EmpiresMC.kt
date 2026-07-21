@@ -2,6 +2,7 @@ package com.dakotatalley.empiresmc
 
 import com.dakotatalley.empiresmc.claim.ClaimDataAccess
 import com.dakotatalley.empiresmc.command.AdminCommand
+import com.dakotatalley.empiresmc.item.ScepterGrant
 import com.dakotatalley.empiresmc.registry.ModRegistry
 import net.fabricmc.api.ModInitializer
 import org.slf4j.Logger
@@ -15,6 +16,7 @@ object EmpiresMC : ModInitializer {
         ModRegistry.initialize()
         ClaimDataAccess.initialize()
         AdminCommand.initialize()
+        ScepterGrant.initialize()
         LOGGER.info("EmpiresMC common initializer running")
     }
 }

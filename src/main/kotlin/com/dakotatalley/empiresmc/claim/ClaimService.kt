@@ -24,6 +24,17 @@ class ClaimService(
 
     fun remainingOf(player: UUID): Int = allowanceOf(player) - claimsOf(player).size
 
+    // The sole write path for the first-join Scepter grant: flips the flag exactly once so a
+    // rejoin never re-grants (recovery goes through the crafting recipe instead). Returns whether
+    // this call actually granted it, so the caller knows whether to give the item.
+    fun grantScepterIfNeeded(player: UUID): Boolean {
+        val profile = profileOf(player)
+        if (profile.receivedScepter) return false
+        profiles[player] = profile.copy(receivedScepter = true)
+        onMutate()
+        return true
+    }
+
     fun claim(player: UUID, key: ClaimKey, tick: Long): ClaimResult {
         if (claims.containsKey(key)) return ClaimResult.AlreadyClaimed
         if (remainingOf(player) <= 0) return ClaimResult.NoAllowance
