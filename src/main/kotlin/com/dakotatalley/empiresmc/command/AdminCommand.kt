@@ -11,6 +11,7 @@ import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.network.chat.Component
+import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ChunkPos
 
@@ -33,6 +34,15 @@ object AdminCommand {
                                 .then(Commands.argument("player", EntityArgument.player()).executes(::profile))
                         )
                         .then(Commands.literal("scepter").executes(::scepter))
+                        .then(
+                            Commands.literal("claim")
+                                .executes { context -> forceClaim(context, context.source.playerOrException) }
+                                .then(
+                                    Commands.argument("player", EntityArgument.player())
+                                        .executes { context -> forceClaim(context, EntityArgument.getPlayer(context, "player")) }
+                                )
+                        )
+                        .then(Commands.literal("unclaim").executes(::forceUnclaim))
                 )
         )
     }
@@ -63,6 +73,37 @@ object AdminCommand {
         val message = "${target.scoreboardName}: tier ${empireProfile.scepterTier}, " +
             "scepter ${if (empireProfile.receivedScepter) "received" else "not received"}, " +
             "$used/$allowance chunks claimed."
+        source.sendSuccess({ Component.literal(message) }, false)
+        return Command.SINGLE_SUCCESS
+    }
+
+    // Raw seeding/override tool (Phase 4 design decisions): acts on the chunk under the invoking
+    // player, bypassing the Scepter gesture, allowance, and cooldown gates entirely - the
+    // mechanism that makes the manual "create a claim, save, reload, observe" flow from Phase 2's
+    // exit criteria reproducible from this phase on. Optional trailing <player> attributes the
+    // claim to someone else (for future multiplayer testing); the chunk is always the invoker's.
+    private fun forceClaim(context: CommandContext<CommandSourceStack>, target: ServerPlayer): Int {
+        val source = context.source
+        val invoker = source.playerOrException
+        val key = ClaimKey(source.level.dimension().identifier(), ChunkPos.containing(invoker.blockPosition()))
+        ClaimDataAccess.of(source.server).service.forceClaim(target.uuid, key, source.level.gameTime)
+        source.sendSuccess(
+            { Component.literal("Force-claimed chunk [${key.pos.x}, ${key.pos.z}] in ${key.dimension} for ${target.scoreboardName}.") },
+            false,
+        )
+        return Command.SINGLE_SUCCESS
+    }
+
+    private fun forceUnclaim(context: CommandContext<CommandSourceStack>): Int {
+        val source = context.source
+        val player = source.playerOrException
+        val key = ClaimKey(source.level.dimension().identifier(), ChunkPos.containing(player.blockPosition()))
+        val removed = ClaimDataAccess.of(source.server).service.forceUnclaim(key)
+        val message = if (removed) {
+            "Force-unclaimed chunk [${key.pos.x}, ${key.pos.z}] in ${key.dimension}."
+        } else {
+            "Chunk [${key.pos.x}, ${key.pos.z}] in ${key.dimension} was not claimed."
+        }
         source.sendSuccess({ Component.literal(message) }, false)
         return Command.SINGLE_SUCCESS
     }

@@ -55,12 +55,12 @@ class ClaimServiceTest {
     }
 
     @Test
-    fun unclaimByTheOwnerReleasesTheChunk() {
+    fun unclaimByTheOwnerReleasesTheChunkOnceCooldownHasElapsed() {
         val service = service()
         val k = key(2, 2)
         service.claim(alice, k, 0L)
 
-        val result = service.unclaim(alice, k)
+        val result = service.unclaim(alice, k, ClaimService.UNCLAIM_COOLDOWN_TICKS)
 
         assertEquals(ClaimResult.Success, result)
         assertNull(service.ownerOf(k))
@@ -74,14 +74,85 @@ class ClaimServiceTest {
         val k = key(3, 3)
         service.claim(alice, k, 0L)
 
-        assertEquals(ClaimResult.NotOwner, service.unclaim(bob, k))
+        assertEquals(ClaimResult.NotOwner, service.unclaim(bob, k, ClaimService.UNCLAIM_COOLDOWN_TICKS))
         assertEquals(alice, service.ownerOf(k))
     }
 
     @Test
     fun unclaimingAChunkNobodyOwnsIsDenied() {
         val service = service()
-        assertEquals(ClaimResult.NotOwner, service.unclaim(alice, key(4, 4)))
+        assertEquals(ClaimResult.NotOwner, service.unclaim(alice, key(4, 4), 0L))
+    }
+
+    @Test
+    fun unclaimIsDeniedBeforeTheCooldownElapsesAndReportsTheRemainingTime() {
+        val service = service()
+        val k = key(6, 6)
+        service.claim(alice, k, 100L)
+
+        val result = service.unclaim(alice, k, 100L + ClaimService.UNCLAIM_COOLDOWN_TICKS - 1)
+
+        assertEquals(ClaimResult.OnCooldown(1L), result)
+        assertEquals(alice, service.ownerOf(k), "a denied unclaim must not release the chunk")
+    }
+
+    @Test
+    fun unclaimSucceedsExactlyOnTheCooldownBoundary() {
+        val service = service()
+        val k = key(7, 7)
+        service.claim(alice, k, 100L)
+
+        val result = service.unclaim(alice, k, 100L + ClaimService.UNCLAIM_COOLDOWN_TICKS)
+
+        assertEquals(ClaimResult.Success, result)
+    }
+
+    @Test
+    fun recordOfReturnsTheClaimRecordForAnOwnedChunkAndNullOtherwise() {
+        val service = service()
+        val k = key(8, 8)
+
+        assertNull(service.recordOf(k))
+
+        service.claim(alice, k, 42L)
+        assertEquals(ClaimRecord(alice, 42L), service.recordOf(k))
+    }
+
+    @Test
+    fun forceClaimBypassesAllowanceAndOverwritesAnExistingOwner() {
+        var mutations = 0
+        val service = service(onMutate = { mutations++ })
+        val k = key(9, 9)
+        service.claim(alice, k, 0L) // consumes alice's one starting allowance slot
+
+        service.forceClaim(bob, k, 10L)
+
+        assertEquals(ClaimRecord(bob, 10L), service.recordOf(k), "force-claim must overwrite the existing owner")
+        assertEquals(2, mutations, "force-claim must still mark the container dirty")
+    }
+
+    @Test
+    fun forceUnclaimBypassesTheCooldownAndReportsWhetherAnythingWasRemoved() {
+        var mutations = 0
+        val service = service(onMutate = { mutations++ })
+        val k = key(10, 10)
+        service.claim(alice, k, 0L) // cooldown has not elapsed
+
+        assertEquals(true, service.forceUnclaim(k))
+        assertNull(service.ownerOf(k))
+        assertEquals(2, mutations)
+
+        assertEquals(false, service.forceUnclaim(k), "nothing left to remove the second time")
+        assertEquals(2, mutations, "a no-op force-unclaim must not mark dirty")
+    }
+
+    @Test
+    fun formatCooldownMinutesFormatsWholeMinutesRoundedUp() {
+        assertEquals("20", ClaimService.formatCooldownMinutes(ClaimService.TICKS_PER_DAY))
+        assertEquals("10", ClaimService.formatCooldownMinutes(ClaimService.TICKS_PER_DAY / 2))
+        assertEquals("1", ClaimService.formatCooldownMinutes(ClaimService.TICKS_PER_MINUTE))
+        // A partial minute past a whole one still rounds up - never understates the wait.
+        assertEquals("2", ClaimService.formatCooldownMinutes(ClaimService.TICKS_PER_MINUTE + 1))
     }
 
     @Test
@@ -159,10 +230,10 @@ class ClaimServiceTest {
         service.claim(alice, k, 0L) // already claimed - denial, no mutation
         assertEquals(1, mutations)
 
-        service.unclaim(bob, k) // not owner - denial, no mutation
+        service.unclaim(bob, k, ClaimService.UNCLAIM_COOLDOWN_TICKS) // not owner - denial, no mutation
         assertEquals(1, mutations)
 
-        service.unclaim(alice, k)
+        service.unclaim(alice, k, ClaimService.UNCLAIM_COOLDOWN_TICKS)
         assertEquals(2, mutations)
     }
 }
