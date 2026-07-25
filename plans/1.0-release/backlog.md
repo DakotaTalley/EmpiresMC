@@ -11,6 +11,7 @@ Part of the [EmpiresMC 1.0 release plan](../1.0-release.md). Nothing here is com
 - **Raycast claim targeting** (claim the chunk you're looking at) if standing-chunk targeting tests poorly.
 - **Downgrade/respec** with partial refund.
 - **Structure-aware claiming rules** (e.g. can't claim village chunks, or claiming them has consequences).
+- **Valor: a separate point/ranking system driving claim allowance and curve**, replacing (or supplementing) the Scepter-upgrade-only model — earned via scepter upgrades as today, plus other acts (small amount per XP gain, completing advancements, etc.), and usable as a PvP-world ranking metric independent of claims. A 2.0-scale idea: real to investigate only if the 1.0 upgrade-ladder curve doesn't feel satisfying in playtesting, since it adds a whole new tracked stat rather than reusing existing state.
 
 ## Multiplayer (data model is ready; everything else isn't)
 

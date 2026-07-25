@@ -67,7 +67,7 @@ class ClaimDataTest {
         data.service.claim(owner, key, tick = 1L) // already claimed - denial, should not dirty
         assertFalse(data.isDirty)
 
-        data.service.unclaim(owner, key)
+        data.service.unclaim(owner, key, tick = ClaimService.UNCLAIM_COOLDOWN_TICKS)
         assertTrue(data.isDirty)
     }
 }

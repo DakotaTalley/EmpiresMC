@@ -3,6 +3,7 @@ package com.dakotatalley.empiresmc.item
 import com.dakotatalley.empiresmc.claim.ClaimDataAccess
 import com.dakotatalley.empiresmc.registry.ModRegistry
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents
+import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
 
@@ -33,6 +34,7 @@ object ScepterGrant {
             // instead. A brand-new player is empty, but an existing player on a newly-modded world
             // could join full and would otherwise never get their one-time Scepter.
             player.inventory.placeItemBackInInventory(ItemStack(ModRegistry.SCEPTER))
+            player.sendSystemMessage(Component.translatable("empiresmc.claim.first_join_instruction"))
         }
     }
 

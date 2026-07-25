@@ -1,5 +1,22 @@
 {
   "item.empiresmc.scepter": "Scepter",
   "item.empiresmc.scepter.tooltip.flavor": "A symbol of the empire you will build.",
-  "item.empiresmc.scepter.tooltip.chunks_placeholder": "Chunks: synced while claim data loads"
+  "item.empiresmc.scepter.tooltip.chunks_placeholder": "Chunks: synced while claim data loads",
+  "empiresmc.claim.first_join_instruction": "Use your Scepter in a chunk to claim your first land.",
+  "empiresmc.claim.claimed": "Claimed chunk [%s, %s].",
+  "empiresmc.claim.no_allowance": "You have no claim allowance remaining.",
+  "empiresmc.claim.owned_by_other": "This chunk is claimed by someone else.",
+  "empiresmc.claim.upgrade_reserved": "Sneak-use here is reserved for a future upgrade.",
+  "empiresmc.claim.upgrade_reserved_unclaimed": "Sneak-use here is reserved for a future upgrade. Stop sneaking and use again to claim this chunk.",
+  "empiresmc.claim.status.chunk": "Chunk [%s, %s]",
+  "empiresmc.claim.status.allowance": "%s/%s chunks claimed (tier %s)",
+  "empiresmc.claim.status.cooldown_ready": "This chunk can be unclaimed now.",
+  "empiresmc.claim.status.cooldown_remaining": "This chunk can be unclaimed in %s more minutes.",
+  "empiresmc.claim.status.cooldown_remaining_one": "This chunk can be unclaimed in 1 more minute.",
+  "empiresmc.claim.status.cooldown_remaining_soon": "This chunk can be unclaimed in less than a minute.",
+  "empiresmc.claim.unclaim_confirm": "Sneak-use again within 5 seconds to unclaim chunk [%s, %s].",
+  "empiresmc.claim.unclaim_success": "Unclaimed chunk [%s, %s].",
+  "empiresmc.claim.unclaim_cooldown": "This chunk cannot be unclaimed for %s more minutes.",
+  "empiresmc.claim.unclaim_cooldown_one": "This chunk cannot be unclaimed for 1 more minute.",
+  "empiresmc.claim.unclaim_cooldown_soon": "This chunk cannot be unclaimed for less than a minute longer."
 }
