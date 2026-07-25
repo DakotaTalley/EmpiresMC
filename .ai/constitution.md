@@ -37,6 +37,7 @@ New rules are added with the `add-rule` skill, which picks the right table and k
 | `SEC-003` | Confirm Destructive Actions | Get explicit confirmation before irreversible operations (force-push, drop table, `rm -rf`, etc.). | `immutable` | `stop` |
 | `SEC-004` | Least Privilege | Request or grant the minimum permissions needed for a task (file access, network, credentials). | `mutable` | `warning` |
 | `SEC-005` | Dependency Vetting | Flag newly introduced third-party dependencies for review before adding them. | `mutable` | `info` |
+| `SEC-006` | Verify Third-Party Source License Before Referencing | Before reading, adapting, or structurally mirroring code from a non-official third-party source (e.g. a GitHub repo turned up via search, as opposed to an official framework/library/docs repo), confirm that source's license and flag it to the user for explicit review before any code derived from it is committed — don't commit blind on the assumption a pattern is generic or public. | `mutable` | `stop` |
 
 ## Development Practice Rules (DEV)
 
@@ -46,6 +47,7 @@ New rules are added with the `add-rule` skill, which picks the right table and k
 | `DEV-002` | Test Before Claiming Done | Run relevant tests/build before reporting a task complete. | `mutable` | `stop` |
 | `DEV-003` | No Scope Creep | Don't add unrelated refactors, features, or abstractions beyond what was requested. | `mutable` | `warning` |
 | `DEV-004` | Small, Reversible Changes | Prefer incremental changes over large rewrites when both accomplish the goal. | `mutable` | `info` |
+| `DEV-005` | Phases and Stand-Alone Features Are Built on Dedicated Branches, Merged to Main via PR | Work on a plan phase or a stand-alone feature starts on its own branch (not committed directly to `main`) and reaches `main` only through a pull request — even on a single-developer project, since this establishes the habit before it needs to be retrofitted once more developers contribute. | `mutable` | `warning` |
 
 ## Documentation Rules (DOC)
 
