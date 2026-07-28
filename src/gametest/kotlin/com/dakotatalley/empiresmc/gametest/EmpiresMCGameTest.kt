@@ -12,8 +12,9 @@ import com.dakotatalley.empiresmc.registry.ModRegistry
 import io.netty.channel.embedded.EmbeddedChannel
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback
+import net.fabricmc.fabric.api.event.player.ItemEvents
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents
-import net.fabricmc.fabric.api.event.player.UseBlockCallback
+import net.fabricmc.fabric.api.event.player.UseItemCallback
 import net.fabricmc.fabric.api.gametest.v1.GameTest
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.core.BlockPos
@@ -32,6 +33,7 @@ import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
+import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.GameType
 import net.minecraft.world.level.block.Blocks
@@ -303,6 +305,11 @@ class EmpiresMCGameTest {
         helper.succeed()
     }
 
+    // BucketItem overrides the generic Item.use(...), not Item.useOn(...), so it never reaches
+    // ItemEvents.USE_ON - ProtectionHooks gates it separately via UseItemCallback, doing its own
+    // raycast (mirroring BucketItem's internal one) since that event carries no hit result. The mock
+    // player has to actually be positioned and looking at the target block for that raycast to find
+    // it - stood one block above the water, looking straight down.
     @GameTest
     fun bucketDeniedInWild(helper: GameTestHelper) {
         val player = helper.makeMockServerPlayer(GameType.SURVIVAL) as ServerPlayer
@@ -310,15 +317,21 @@ class EmpiresMCGameTest {
         val key = randomChunkKey(helper)
         val pos = wildBlockPos(helper, key)
         helper.level.setBlock(pos, Blocks.WATER.defaultBlockState(), 3)
+        player.setPos(pos.x + 0.5, (pos.y + 1).toDouble(), pos.z + 0.5)
+        player.setXRot(90f)
         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack(Items.BUCKET))
 
-        val result = UseBlockCallback.EVENT.invoker()
-            .interact(player, helper.level, InteractionHand.MAIN_HAND, hitResult(pos))
+        val result = UseItemCallback.EVENT.invoker().interact(player, helper.level, InteractionHand.MAIN_HAND)
 
         helper.assertTrue(result != InteractionResult.PASS, "using a bucket in the wild should be denied")
         helper.succeed()
     }
 
+    // ItemEvents.USE_ON wraps Item.useOn(UseOnContext), the exact call ServerPlayerGameMode.useItemOn
+    // makes only after the clicked block's own reaction has already declined to consume - returning
+    // null defers to vanilla (allowed), a non-null result denies. See ProtectionHooks.initialize()'s
+    // comment for why this replaced UseBlockCallback (which fired before the block had a say at all,
+    // and so wrongly denied opening a door/chest whenever a deny-list or block item was in hand).
     @GameTest
     fun boneMealDeniedInWild(helper: GameTestHelper) {
         val player = helper.makeMockServerPlayer(GameType.SURVIVAL) as ServerPlayer
@@ -328,10 +341,10 @@ class EmpiresMCGameTest {
         helper.level.setBlock(pos, Blocks.GRASS_BLOCK.defaultBlockState(), 3)
         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack(Items.BONE_MEAL))
 
-        val result = UseBlockCallback.EVENT.invoker()
-            .interact(player, helper.level, InteractionHand.MAIN_HAND, hitResult(pos))
+        val result = ItemEvents.USE_ON.invoker()
+            .useOn(UseOnContext(player, InteractionHand.MAIN_HAND, hitResult(pos)))
 
-        helper.assertTrue(result != InteractionResult.PASS, "using bone meal in the wild should be denied")
+        helper.assertTrue(result != null, "using bone meal in the wild should be denied")
         helper.succeed()
     }
 
@@ -346,18 +359,18 @@ class EmpiresMCGameTest {
         helper.level.setBlock(targetPos, Blocks.AIR.defaultBlockState(), 3)
         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack(Items.DIRT))
 
-        val result = UseBlockCallback.EVENT.invoker()
-            .interact(player, helper.level, InteractionHand.MAIN_HAND, hitResult(basePos, Direction.UP))
+        val result = ItemEvents.USE_ON.invoker()
+            .useOn(UseOnContext(player, InteractionHand.MAIN_HAND, hitResult(basePos, Direction.UP)))
 
-        helper.assertTrue(result != InteractionResult.PASS, "placing in the wild should be denied")
+        helper.assertTrue(result != null, "placing in the wild should be denied")
         helper.assertTrue(helper.level.getBlockState(targetPos).block == Blocks.AIR, "the target position should remain empty")
         helper.succeed()
     }
 
-    // The hook only clears the way for vanilla placement (returns PASS); invoking it directly here
-    // (rather than a full simulated client round trip) doesn't itself place the block, so this
-    // asserts non-interference rather than the resulting block state - same limitation as the
-    // Phase 3/4 event-invoker tests above.
+    // The hook only clears the way for vanilla placement (returns null, deferring to vanilla);
+    // invoking it directly here (rather than a full simulated client round trip) doesn't itself place
+    // the block, so this asserts non-interference rather than the resulting block state - same
+    // limitation as the Phase 3/4 event-invoker tests above.
     @GameTest
     fun placeAllowedInOwnClaim(helper: GameTestHelper) {
         val player = helper.makeMockServerPlayer(GameType.SURVIVAL) as ServerPlayer
@@ -370,10 +383,10 @@ class EmpiresMCGameTest {
         helper.level.setBlock(targetPos, Blocks.AIR.defaultBlockState(), 3)
         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack(Items.DIRT))
 
-        val result = UseBlockCallback.EVENT.invoker()
-            .interact(player, helper.level, InteractionHand.MAIN_HAND, hitResult(basePos, Direction.UP))
+        val result = ItemEvents.USE_ON.invoker()
+            .useOn(UseOnContext(player, InteractionHand.MAIN_HAND, hitResult(basePos, Direction.UP)))
 
-        helper.assertTrue(result == InteractionResult.PASS, "placing in your own claim should not be denied")
+        helper.assertTrue(result == null, "placing in your own claim should not be denied")
         helper.succeed()
     }
 
@@ -398,16 +411,21 @@ class EmpiresMCGameTest {
         player.setYRot(Direction.getYRot(Direction.EAST))
         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack(Items.BED.red()))
 
-        val result = UseBlockCallback.EVENT.invoker()
-            .interact(player, helper.level, InteractionHand.MAIN_HAND, hitResult(footPos.below(), Direction.UP))
+        val result = ItemEvents.USE_ON.invoker()
+            .useOn(UseOnContext(player, InteractionHand.MAIN_HAND, hitResult(footPos.below(), Direction.UP)))
 
         helper.assertTrue(
-            result != InteractionResult.PASS,
+            result != null,
             "a bed placement whose head crosses into an unclaimed chunk should be denied",
         )
         helper.succeed()
     }
 
+    // Empty hand (no deny-list/block item) is the one case ItemEvents.USE_ON was always going to stay
+    // out of the way for, hook-design aside - real coverage for "a door/chest still opens even while
+    // holding a placeable item outside the claim" is a vanilla ServerPlayerGameMode.useItemOn
+    // ordering guarantee (block's own reaction runs before stack.useOn is ever reached), not
+    // something invoking our hook in isolation can exercise; verified by manual playtest instead.
     @GameTest
     fun chestAndDoorInteractionAllowedInWild(helper: GameTestHelper) {
         val player = helper.makeMockServerPlayer(GameType.SURVIVAL) as ServerPlayer
@@ -416,10 +434,10 @@ class EmpiresMCGameTest {
         helper.level.setBlock(pos, Blocks.CHEST.defaultBlockState(), 3)
         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)
 
-        val result = UseBlockCallback.EVENT.invoker()
-            .interact(player, helper.level, InteractionHand.MAIN_HAND, hitResult(pos))
+        val result = ItemEvents.USE_ON.invoker()
+            .useOn(UseOnContext(player, InteractionHand.MAIN_HAND, hitResult(pos)))
 
-        helper.assertTrue(result == InteractionResult.PASS, "opening a chest in the wild should not be denied")
+        helper.assertTrue(result == null, "opening a chest in the wild should not be denied")
         helper.succeed()
     }
 
