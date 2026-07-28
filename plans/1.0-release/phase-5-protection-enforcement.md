@@ -23,13 +23,15 @@ The core rule of the mod is enforced: outside their claims the player cannot cha
 
 ## Steps
 
-- [ ] Central `ProtectionService.canBreak`/`canPlace`/`canInteract(player, world, pos): ProtectionResult` (+ deny reason: wild vs. owned by someone else) so every hook shares one decision path per action kind — rules live in one place, hooks stay dumb, and each action kind is independently gate-able for Phase 7.
-- [ ] Wire break denial (both events), with the crack-prevention path verified.
-- [ ] Wire place denial via the placement-position chunk check, including multi-block placements (beds: check both halves; doors need no equivalent — their second half is a pure vertical offset and can't cross a chunk border).
-- [ ] Wire modifying-interaction denial: buckets (place and pickup), flint & steel, bone meal, hoe/shovel/axe right-click transforms.
-- [ ] Throttled action-bar denial feedback with translatable messages, distinguishing wild from owned-by-someone-else.
-- [ ] Creative bypass, applied identically across `canBreak`/`canPlace`/`canInteract` (single seam per predicate for the Phase 7 config toggles).
-- [ ] Gametests: break denied in wild / on someone else's claim / allowed in own claim; place denied in wild / allowed in claim; cross-border placement denied; bucket denied in wild; bone meal denied in wild; chest/door interaction *allowed* in wild; creative bypass works.
+- [x] Central `ProtectionService.canBreak`/`canPlace`/`canInteract(player, world, pos): ProtectionResult` (+ deny reason: wild vs. owned by someone else) so every hook shares one decision path per action kind — rules live in one place, hooks stay dumb, and each action kind is independently gate-able for Phase 7.
+- [x] Wire break denial (both events), with the crack-prevention path verified.
+- [x] Wire place denial via the placement-position chunk check, including multi-block placements (beds: check both halves; doors need no equivalent — their second half is a pure vertical offset and can't cross a chunk border).
+- [x] Wire modifying-interaction denial: buckets (place and pickup), flint & steel, bone meal, hoe/shovel/axe right-click transforms.
+- [x] Throttled action-bar denial feedback with translatable messages, distinguishing wild from owned-by-someone-else.
+- [x] Creative bypass, applied identically across `canBreak`/`canPlace`/`canInteract` (single seam per predicate for the Phase 7 config toggles).
+- [x] Gametests: break denied in wild / on someone else's claim / allowed in own claim; place denied in wild / allowed in claim; cross-border placement denied; bucket denied in wild; bone meal denied in wild; chest/door interaction *allowed* in wild; creative bypass works.
+
+**Delivered:** new `com.dakotatalley.empiresmc.protection` package — `ProtectionResult` (sealed `Allowed`/`DeniedWild`/`DeniedOwnedByOther`, mirroring `ClaimResult`), `ProtectionService` (the three predicates above, stateless), `ProtectionFeedback` (throttled action-bar + sound denial), `ProtectionHooks` (registers `PlayerBlockBreakEvents.BEFORE`, `AttackBlockCallback`, and `UseBlockCallback` — no mixins, per the design decision above). Wired into `EmpiresMC.onInitialize()`; two new lang keys (`empiresmc.protection.denied_wild`/`denied_owned`). 14 new gametests added to `EmpiresMCGameTest.kt` covering every bullet above plus direct `ProtectionService` assertions for the wild-vs-owned-by-other distinction. `./gradlew clean build` green: full JUnit suite + all 32 gametests passing.
 
 ## Risks & flags
 

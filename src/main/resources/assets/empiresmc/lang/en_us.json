@@ -18,5 +18,7 @@
   "empiresmc.claim.unclaim_success": "Unclaimed chunk [%s, %s].",
   "empiresmc.claim.unclaim_cooldown": "This chunk cannot be unclaimed for %s more minutes.",
   "empiresmc.claim.unclaim_cooldown_one": "This chunk cannot be unclaimed for 1 more minute.",
-  "empiresmc.claim.unclaim_cooldown_soon": "This chunk cannot be unclaimed for less than a minute longer."
+  "empiresmc.claim.unclaim_cooldown_soon": "This chunk cannot be unclaimed for less than a minute longer.",
+  "empiresmc.protection.denied_wild": "This land is unclaimed. Claim it with your Scepter to build here.",
+  "empiresmc.protection.denied_owned": "This land is claimed by another empire."
 }
