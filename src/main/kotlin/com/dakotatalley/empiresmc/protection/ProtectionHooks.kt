@@ -59,7 +59,10 @@ object ProtectionHooks {
                 if (result == ProtectionResult.Allowed) {
                     null
                 } else {
-                    (context.player as? ServerPlayer)?.let { ProtectionFeedback.deny(it, context.level, result) }
+                    (context.player as? ServerPlayer)?.let {
+                        ProtectionFeedback.deny(it, context.level, result)
+                        ProtectionFeedback.resyncInventory(it)
+                    }
                     InteractionResult.FAIL
                 }
             },
@@ -80,7 +83,10 @@ object ProtectionHooks {
                 if (result == ProtectionResult.Allowed) {
                     InteractionResult.PASS
                 } else {
-                    (player as? ServerPlayer)?.let { ProtectionFeedback.deny(it, level, result) }
+                    (player as? ServerPlayer)?.let {
+                        ProtectionFeedback.deny(it, level, result)
+                        ProtectionFeedback.resyncInventory(it)
+                    }
                     InteractionResult.FAIL
                 }
             },
