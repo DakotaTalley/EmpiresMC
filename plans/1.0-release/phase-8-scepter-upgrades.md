@@ -31,7 +31,7 @@ The progression engine: the Scepter upgrades through config-defined tiers, each 
 - [ ] Extend the Phase 7 config schema with the `tiers` list + the draft defaults above; validate item ids at server start (warn and disable the affected tier on unknown ids — modpack-safe, never crash).
 - [ ] Implement `UpgradeService`: affordability check with itemized missing-cost report, atomic consume (items + levels), tier increment, allowance recalculation.
 - [ ] Wire the sneak-use gesture with two-step confirm; at max tier, report "fully upgraded" instead of a cost.
-- [ ] Feedback: cost/missing message uses item display names; success plays a level-up-style sound + message; Phase 6 delta payload carries the tier change so tooltip/HUD update instantly.
+- [ ] Feedback: cost/missing message uses item display names; success plays a level-up-style sound (via `util/PlayerSounds.playTo` — `player.playSound(...)` server-side is inaudible to the acting player, see [Phase 5](phase-5-protection-enforcement.md)) + message; Phase 6 delta payload carries the tier change so tooltip/HUD update instantly.
 - [ ] Localize all upgrade messages (`en_us.json`).
 - [ ] Unit tests: allowance derivation across tiers, affordability edge cases (exact amounts, split stacks, levels-but-no-items and vice versa), tier-table-shrunk-below-current-tier handling (treat as max tier; never crash or revoke).
 - [ ] Gametests: successful upgrade consumes exactly the configured cost and immediately permits claiming the granted chunks; denied upgrade consumes nothing; confirm expiry; creative free upgrade.

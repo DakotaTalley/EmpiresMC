@@ -5,6 +5,7 @@ import com.dakotatalley.empiresmc.claim.ClaimGestureService
 import com.dakotatalley.empiresmc.claim.ClaimKey
 import com.dakotatalley.empiresmc.claim.ClaimResult
 import com.dakotatalley.empiresmc.claim.ClaimService
+import com.dakotatalley.empiresmc.util.PlayerSounds
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
@@ -102,7 +103,7 @@ class ScepterItem(properties: Properties) : Item(properties) {
         } else {
             player.sendSystemMessage(Component.translatable(KEY_STATUS_COOLDOWN_READY))
         }
-        player.playSound(SoundEvents.BOOK_PAGE_TURN, 1.0f, 1.0f)
+        PlayerSounds.playTo(player, SoundEvents.BOOK_PAGE_TURN)
     }
 
     private fun handleSneakUse(player: ServerPlayer, service: ClaimService, key: ClaimKey, tick: Long) {
@@ -152,7 +153,7 @@ class ScepterItem(properties: Properties) : Item(properties) {
 
     private fun feedback(player: ServerPlayer, message: Component, sound: SoundEvent) {
         player.sendSystemMessage(message)
-        player.playSound(sound, 1.0f, 1.0f)
+        PlayerSounds.playTo(player, sound)
     }
 
     @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")

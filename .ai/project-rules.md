@@ -8,6 +8,7 @@ Rules this project has added that aren't part of the constitution's categories, 
 
 | ID | Title | Description | Mutability | Enforcement |
 |---|---|---|---|---|
+| `PROJ-003` | Sync Guidance at Phase/Feature Start | Before starting feature-specific work on a new plan phase or stand-alone feature branch, run `sync-guidance` and commit its result as an isolated first commit on that branch (e.g. `chore: sync guidance`) before any feature commits, so guidance stays current without template diffs mixing into feature work. | `mutable` | `warning` |
 
 ## Retired Rule IDs
 
