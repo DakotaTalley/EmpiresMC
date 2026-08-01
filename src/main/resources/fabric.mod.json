@@ -12,7 +12,7 @@
     "sources": "https://github.com/DakotaTalley/EmpiresMC"
   },
   "environment": "*",
-  "license": "LGPL-3.0-or-later",
+  "license": "MPL-2.0",
   "entrypoints": {
     "main": [
       {

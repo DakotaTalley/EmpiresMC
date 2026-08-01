@@ -33,6 +33,68 @@ tasks.test {
     useJUnitPlatform()
 }
 
+// Every Kotlin source must carry the MPL-2.0 Exhibit A notice. Unlike LGPL/MIT — where the root
+// LICENSE covers the whole tree — MPL-2.0 §1.4 defines Covered Software by the notice attached to
+// each file, so a source file without the header is arguably not covered by the project license at
+// all. Mozilla's directory-level fallback (FAQ Q22) only applies where an in-file notice is
+// "impossible or impractical", which is true of the Phase 9 art but not of a .kt file.
+//
+// This is enforced rather than documented because the failure is silent: a source missing the
+// header compiles, passes every test, and ships in the jar. The gap would surface only when
+// someone forks — the one moment it matters. Wired into `check`, so `./gradlew build` and CI both
+// catch it with no workflow change.
+val licenseHeaderSources = fileTree("src") { include("**/*.kt") }
+val licenseHeaderMarker = layout.buildDirectory.file("checks/license-headers.txt")
+val licenseHeaderRoot = projectDir
+
+val checkLicenseHeaders = tasks.register("checkLicenseHeaders") {
+    group = "verification"
+    description = "Fails if any Kotlin source is missing the MPL-2.0 Exhibit A header."
+
+    inputs.files(licenseHeaderSources)
+        .withPropertyName("sources")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.file(licenseHeaderMarker)
+
+    doLast {
+        // Match on the distinctive first line only — the URL and wrapping vary between comment
+        // styles, and matching the whole block would reject a valid but reflowed notice.
+        val notice = "This Source Code Form is subject to the terms of the Mozilla Public"
+        val missing = licenseHeaderSources.files
+            .filter { file -> file.useLines { lines -> lines.take(10).none { notice in it } } }
+            .map { it.toRelativeString(licenseHeaderRoot) }
+            .sorted()
+
+        if (missing.isNotEmpty()) {
+            throw GradleException(
+                buildString {
+                    appendLine("${missing.size} Kotlin source(s) missing the MPL-2.0 Exhibit A header:")
+                    missing.forEach { appendLine("  $it") }
+                    appendLine()
+                    appendLine("MPL-2.0 §1.4 defines Covered Software by the notice attached to each file,")
+                    appendLine("so a source without this header may not be covered by the project license.")
+                    appendLine("Add to the top of each file, above the package declaration:")
+                    appendLine()
+                    appendLine("/*")
+                    appendLine(" * This Source Code Form is subject to the terms of the Mozilla Public")
+                    appendLine(" * License, v. 2.0. If a copy of the MPL was not distributed with this")
+                    appendLine(" * file, You can obtain one at https://mozilla.org/MPL/2.0/.")
+                    appendLine(" */")
+                },
+            )
+        }
+
+        licenseHeaderMarker.get().asFile.apply {
+            parentFile.mkdirs()
+            writeText("${licenseHeaderSources.files.size} sources checked\n")
+        }
+    }
+}
+
+tasks.check {
+    dependsOn(checkLicenseHeaders)
+}
+
 fabricApi {
     configureTests {
         // Separate source set + mod id from `main` so gametest code never ships in the mod jar.
